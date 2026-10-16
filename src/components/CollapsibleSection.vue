@@ -60,14 +60,14 @@
 
     <div v-show="isExpanded" class="section-content">
       <div class="instances-grid" :class="{ 'has-multiple': compCount > 1 }">
-        <div v-for="n in compCount" :key="n" class="form-instance" :class="{ 'is-collapsed': !expandedInstances[n], 'no-header': maxComponents === 1 }">
-          <div v-if="maxComponents !== 1" class="instance-header" @click="toggleInstance(n)">
-            <span class="instance-title">{{ singularTitle || title }} {{ compCount > 1 ? '#' + n : '' }}</span>
+        <div v-for="(id, i) in instances" :key="id" class="form-instance" :class="{ 'is-collapsed': !expandedInstances[id], 'no-header': maxComponents === 1 }">
+          <div v-if="maxComponents !== 1" class="instance-header" @click="toggleInstance(id)">
+            <span class="instance-title">{{ singularTitle || title }} {{ compCount > 1 ? '#' + (i + 1) : '' }}</span>
             <div class="instance-actions">
               <button
                 type="button"
                 class="btn-remove-instance"
-                @click.stop="confirmRemove(n - 1)"
+                @click.stop="confirmRemove(i)"
                 title="Remove"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
@@ -88,8 +88,8 @@
               </svg>
             </div>
           </div>
-          <div v-show="maxComponents === 1 || expandedInstances[n]" class="instance-content">
-            <slot :index="n"></slot>
+          <div v-show="maxComponents === 1 || expandedInstances[id]" class="instance-content">
+            <slot :index="i + 1"></slot>
           </div>
         </div>
       </div>
@@ -136,14 +136,17 @@ const props = defineProps({
   }
 });
 
-const compCount = ref(props.displaysAtBegin);
+let nextId = 0;
+const instances = ref([]);
+const compCount = computed(() => instances.value.length);
 const isExpanded = ref(props.defaultExpanded || props.displaysAtBegin > 0);
 const expandedInstances = reactive({});
 const skipDeleteConfirm = inject('skipDeleteConfirm', ref(false));
 
 // initialize expanded state for existing instances
 for (let i = 1; i <= props.displaysAtBegin; i++) {
-  expandedInstances[i] = true;
+  instances.value.push(++nextId);
+  expandedInstances[nextId] = true;
 }
 
 const canAdd = computed(() => {
@@ -159,8 +162,8 @@ const toggleInstance = (n) => {
 };
 
 const addInstance = () => {
-  compCount.value++;
-  expandedInstances[compCount.value] = true;
+  instances.value.push(++nextId);
+  expandedInstances[nextId] = true;
   if (!isExpanded.value) {
     isExpanded.value = true;
   }
@@ -173,9 +176,7 @@ const confirmRemove = (index) => {
 };
 
 const removeAt = (index) => {
-  if (compCount.value > 0) {
-    compCount.value--;
-  }
+  instances.value.splice(index, 1);
 };
 </script>
 

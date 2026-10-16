@@ -22,4 +22,19 @@ describe('Creating a file', () => {
       expect(parsed.storage.files[1].group.id).to.equal(0)
     });
   })
+
+  it('removes the selected file', () => {
+    // load fixtures
+    cy.get('input[type=file]').selectFile('cypress/fixtures/CreateFile.json')
+    cy.contains('.instance-header', 'Add File #1').find('.btn-remove-instance').click()
+    cy.get('[data-testid=download_ignition]').click()
+
+    // checking generated ignition file
+    cy.readFile('cypress/downloads/config.ign').should((content) => {
+      const parsed = JSON.parse(content)
+      expect(parsed.storage.files).to.have.length(1)
+      expect(parsed.storage.files[0].user.id).to.equal(0)
+      expect(parsed.storage.files[0].group.id).to.equal(0)
+    });
+  })
 })
